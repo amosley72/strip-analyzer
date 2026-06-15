@@ -47,7 +47,7 @@ def logistic_4pl(x: float, A_param: float, B_param: float, C_param: float, D_par
 class AnalysisResult(BaseModel):
     tc_ratio: float = 0.0
     estimated_concentration_mg_ml: float = 0.0
-    interpretation: str ""
+    interpretation: str = ""
 
 @app.get("/")
 def read_root():
