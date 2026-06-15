@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic.v1 import BaseModel
+from pydantic import BaseModel
 
 # Initialize the FastAPI Production App
 app = FastAPI(
@@ -45,9 +45,9 @@ def logistic_4pl(x: float, A_param: float, B_param: float, C_param: float, D_par
 
 # Structured JSON Response Contract
 class AnalysisResult(BaseModel):
-    tc_ratio: float
-    estimated_concentration_mg_ml: float
-    interpretation: str
+    tc_ratio: float = 0.0
+    estimated_concentration_mg_ml: float = 0.0
+    interpretation: str ""
 
 @app.get("/")
 def read_root():
