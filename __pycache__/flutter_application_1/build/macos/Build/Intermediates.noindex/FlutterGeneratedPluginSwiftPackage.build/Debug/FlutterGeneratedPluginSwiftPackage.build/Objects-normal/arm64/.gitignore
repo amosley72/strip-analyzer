@@ -1,0 +1,11 @@
+# Ignore local security certificates
+*.pem
+cert.pem
+key.pem
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore temporary strip image uploads
+*temp_upload_*.png
