@@ -1,4 +1,0 @@
-module webview_flutter_wkwebview {
-header "webview_flutter_wkwebview-Swift.h"
-export *
-}
