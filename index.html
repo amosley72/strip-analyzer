@@ -22,6 +22,7 @@
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             box-sizing: border-box;
+            margin-top: 50px;
         }
         h1 {
             font-size: 24px;
@@ -29,22 +30,17 @@
             margin-top: 0;
             text-align: center;
         }
-        .upload-area {
-            border: 2px dashed #007aff;
-            background: #f4f9ff;
+        .instruction-area {
+            border: 2px dashed #999;
+            background: #fafafa;
             border-radius: 12px;
             padding: 40px 20px;
             text-align: center;
-            cursor: pointer;
             margin-bottom: 20px;
-            transition: background 0.2s;
-        }
-        .upload-area:hover {
-            background: #eaf4ff;
         }
         .upload-icon {
             font-size: 48px;
-            color: #007aff;
+            color: #666;
             margin-bottom: 10px;
         }
         button {
@@ -91,6 +87,20 @@
         .result-item strong {
             color: #333;
         }
+        
+        /* 🎨 NEW: Qualitative Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            font-size: 18px;
+            margin-top: 4px;
+        }
+        .badge-positive { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .badge-negative { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .badge-invalid { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+
         #loading {
             display: none;
             text-align: center;
@@ -98,62 +108,174 @@
             color: #007aff;
             font-weight: 600;
         }
+        .modal-overlay {
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.7); 
+            z-index: 999; 
+            justify-content: center; 
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            background: white; 
+            padding: 25px; 
+            border-radius: 16px; 
+            max-width: 420px; 
+            width: 100%;
+            text-align: center; 
+            box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
 
+<div id="dilutionBanner" style="display:none; background:#d93838; color:white; padding:12px; text-align:center; font-weight:bold; position:fixed; top:0; left:0; width:100%; z-index:1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+    ⚠️ DILUTION MODE ACTIVE (<span id="bannerFactorDisplay">10</span>x) | 
+    <button onclick="quitDilutionSchema()" style="display:inline-block; width:auto; background:white; color:#d93838; border:none; padding:4px 12px; font-weight:bold; margin-left:15px; cursor:pointer; border-radius:6px; font-size:13px;">QUIT DILUTION SCHEMA</button>
+</div>
+
+<div id="overflowModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="color:#d93838; margin-top:0; font-size:20px;">Concentration Exceeds 2 mg/mL</h3>
+        <p style="color:#555; line-height:1.4;">Dilute solution and retest in order to determine lower concentration.</p>
+        <div style="margin-top:22px; display:flex; gap:12px;">
+            <button onclick="triggerDilutionPipeline()" style="background:#28a745;">Dilute & Retest</button>
+            <button onclick="closeModal('overflowModal')" style="background:#6c757d;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="instructionsModal" class="modal-overlay">
+    <div class="modal-card" style="text-align:left; max-width:460px;">
+        <h3 style="color:#007bff; margin-top:0; text-align:center; font-size:20px;">Dilution Procedure Instructions</h3>
+        <p style="line-height:1.5; font-size:15px; color:#333; margin-bottom:20px;">
+            Take <strong>1 mL</strong> of the solution previously tested and add <strong>9 mL</strong> of water to it. Mix vigorously.
+        </p>
+        <p style="line-height:1.5; font-size:15px; color:#333; margin-bottom:20px;">
+            Insert another test strip and repeat the previous procedure for testing strips. Take a picture of the strips.
+        </p>
+        <div style="margin-top:24px; text-align:center;">
+            <button onclick="engageDilutionCamera()" style="background:#007bff; padding:12px 40px;">OK</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <h1>Strip Analyzer</h1>
     
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon">📸</div>
-        <p style="margin:0; font-weight:600; color:#333;">Take Photo or Upload Strip Image</p>
-        <p style="margin:5px 0 0 0; font-size:14px; color:#666;">Supports camera snapshot directly</p>
-        <img id="preview" alt="Image preview">
+    <div id="cameraMode" style="display: none;">
+        <div style="position: relative; width: 100%; background: black; border-radius: 12px; overflow: hidden;">
+            <video id="cameraFeed" autoplay playsinline style="width: 100%; display: block; background: black;"></video>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+                <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+                    <defs>
+                        <mask id="guideMask">
+                            <rect width="100%" height="100%" fill="white"/>
+                            <rect id="guideBox" x="5%" y="45%" width="90%" height="10%" fill="black"/>
+                        </mask>
+                    </defs>
+                    <rect width="100%" height="100%" fill="rgba(0,0,0,0.5)" mask="url(#guideMask)"/>
+                    <rect id="guideBoxBorder" x="5%" y="45%" width="90%" height="10%" fill="none" stroke="#00ff00" stroke-width="3" stroke-dasharray="5,5"/>
+                </svg>
+                <p style="position: absolute; color: white; font-weight: 600; font-size: 14px; text-align: center; bottom: 20px; width: 100%; margin: 0;">Position strip in green box</p>
+            </div>
+        </div>
+        <button id="captureBtn" onclick="performCapture()" style="margin-top: 15px;">Capture Photo</button>
+        <button id="switchBtn" onclick="switchToUpload()" style="margin-top: 10px; background-color: #999;">Cancel Camera</button>
     </div>
 
-    <input type="file" id="fileInput" accept="image/*" capture="environment">
-    <button id="analyzeBtn" onclick="uploadAndAnalyze()" disabled>Analyze Test Strip</button>
+    <div id="uploadMode">
+        <div class="instruction-area">
+            <div class="upload-icon">📸</div>
+            <p style="margin:0; font-weight:600; color:#333;">Test Strip Ready for Quantitation</p>
+            <p style="margin:5px 0 0 0; font-size:14px; color:#666;">Launch the guided scan viewfinder below</p>
+            <img id="preview" alt="Image preview">
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*" capture="environment">
+        <button id="cameraBtn" onclick="startCamera()" style="margin-top: 10px; background-color: #34c759;">Use Camera with Guide</button>
+    </div>
+
+    <button id="analyzeBtn" onclick="uploadAndAnalyze()" disabled style="margin-top: 15px; display: none;">Analyze Test Strip</button>
 
     <div id="loading">Analyzing image on cloud server...</div>
 
     <div id="resultsCard" class="results">
-        <h3 style="margin-top:0;">Analysis Results</h3>
+        <h3 style="margin-top:0; text-align: center; border-bottom: 1px solid #ddd; padding-bottom: 8px;">Analysis Results</h3>
+        
+        <div class="result-item" style="text-align: center; margin-bottom: 20px;">
+            <strong>Test Outcome:</strong><br>
+            <span id="qualitativeBadge" class="status-badge">-</span>
+        </div>
+
         <div class="result-item"><strong>T/C Ratio:</strong> <span id="tcRatio">-</span></div>
-        <div class="result-item"><strong>Estimated Concentration:</strong> <span id="concentration">-</span> mg/mL</div>
-        <div class="result-item"><strong>Interpretation:</strong> <span id="interpretation">-</span></div>
+        <div class="result-item"><strong>Concentration (Current Strip):</strong> <span id="concentration">-</span> mg/mL</div>
+        
+        <div class="result-item" id="originalResultWrapper" style="display: none; background: #fff3cd; padding: 8px; border-radius: 6px; border: 1px solid #ffeeba;">
+            <strong>Concentration in original solution:</strong> <span id="originalConcentration" style="color: #b91c1c; font-weight: bold;">-</span> mg/mL
+        </div>
+        
+        <div class="result-item" style="margin-top: 15px;"><strong>Details:</strong> <span id="interpretation">-</span></div>
     </div>
 </div>
 
 <script>
-    // Live Decoupled Architecture Route configuration
-    const SERVER_URL = "https://strip-analyzer-backend.onrender.com/analyze";
+    const SERVER_URL = "/analyze";
     
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const loading = document.getElementById('loading');
     const resultsCard = document.getElementById('resultsCard');
+    const cameraFeed = document.getElementById('cameraFeed');
+    const cameraMode = document.getElementById('cameraMode');
+    const uploadMode = document.getElementById('uploadMode');
+    
+    let currentFile = null;
+    let cameraStream = null;
 
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                analyzeBtn.disabled = false;
+    let currentDilutionFactor = 1;
+    let pendingDilutionStep = false;
+
+async function startCamera() {
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: "environment", 
+                // 🌟 CHANGE THIS: Force the browser to request maximum hardware resolution
+                width: { ideal: 4096, min: 1920 }, 
+                height: { ideal: 2160, min: 1080 } 
             }
-            reader.readAsDataURL(file);
+        });
+        cameraFeed.srcObject = cameraStream;
+        uploadMode.style.display = 'none';
+        cameraMode.style.display = 'block';
+        analyzeBtn.style.display = 'none';
+    } catch (error) {
+        alert('Camera access denied or unavailable: ' + error.message);
+    }
+}
+    function switchToUpload() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
         }
-    });
+        cameraMode.style.display = 'none';
+        uploadMode.style.display = 'block';
+    }
 
     async function uploadAndAnalyze() {
-        const file = fileInput.files[0];
-        if (!file) return;
+        if (!currentFile) return;
 
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', currentFile);
+        formData.append('dilution_factor', currentDilutionFactor);
 
         analyzeBtn.disabled = true;
         loading.style.display = 'block';
@@ -171,12 +293,39 @@
 
             const data = await response.json();
             
-            // Populating UI fields dynamically
             document.getElementById('tcRatio').innerText = data.tc_ratio;
             document.getElementById('concentration').innerText = data.estimated_concentration_mg_ml;
             document.getElementById('interpretation').innerText = data.interpretation;
             
+            // 🎯 Update Objective Result Badges
+            const badge = document.getElementById('qualitativeBadge');
+            badge.innerText = data.qualitative_result;
+            badge.className = "status-badge"; // clear old styles
+            
+            if (data.qualitative_result === "POSITIVE") {
+                badge.classList.add("badge-positive");
+            } else if (data.qualitative_result === "NEGATIVE") {
+                badge.classList.add("badge-negative");
+            } else {
+                badge.classList.add("badge-invalid");
+            }
+            
+            if (currentDilutionFactor > 1) {
+                document.getElementById('originalConcentration').innerText = data.original_concentration_mg_ml;
+                document.getElementById('originalResultWrapper').style.display = 'block';
+            } else {
+                document.getElementById('originalResultWrapper').style.display = 'none';
+            }
+            
             resultsCard.style.display = 'block';
+
+            if (data.estimated_concentration_mg_ml >= 2.0) {
+                pendingDilutionStep = true;
+                openModal('overflowModal');
+            } else {
+                pendingDilutionStep = false;
+            }
+
         } catch (error) {
             alert('Analysis failed: ' + error.message);
             console.error(error);
@@ -185,7 +334,81 @@
             analyzeBtn.disabled = false;
         }
     }
-</script>
+    
+   function performCapture() {
+    const canvas = document.createElement('canvas');
+    const fullWidth = cameraFeed.videoWidth;
+    const fullHeight = cameraFeed.videoHeight;
+    
+    const guideX = fullWidth * 0.05;
+    const guideY = fullHeight * 0.45;
+    const guideWidth = fullWidth * 0.90;
+    const guideHeight = fullHeight * 0.10;
+    
+    canvas.width = guideWidth;
+    canvas.height = guideHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(cameraFeed, guideX, guideY, guideWidth, guideHeight, 0, 0, guideWidth, guideHeight);
+    
+    canvas.toBlob(function(blob) {
+        currentFile = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+        
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        
+        cameraMode.style.display = 'none';
+        uploadMode.style.display = 'block';
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // 🌟 THIS IS THE KEY CHANGE:
+            // This forces the "instruction-area" box to show the EXACT cropped image
+            // that is being bundled up and sent to your backend server.
+            preview.src = e.target.result;
+            preview.style.display = 'block'; 
+            
+            analyzeBtn.disabled = false;
+            uploadAndAnalyze();
+        }
+        reader.readAsDataURL(blob);
+    }, 'image/jpeg');
+}
 
+    function triggerDilutionPipeline() {
+        closeModal('overflowModal');
+        openModal('instructionsModal');
+    }
+
+    function engageDilutionCamera() {
+        closeModal('instructionsModal');
+        if (pendingDilutionStep) {
+            currentDilutionFactor = currentDilutionFactor * 10;
+            pendingDilutionStep = false;
+        }
+        document.getElementById('bannerFactorDisplay').innerText = currentDilutionFactor;
+        document.getElementById('dilutionBanner').style.display = 'block';
+        startCamera();
+    }
+
+    function quitDilutionSchema() {
+        currentDilutionFactor = 1;
+        pendingDilutionStep = false;
+        document.getElementById('dilutionBanner').style.display = 'none';
+        document.getElementById('originalResultWrapper').style.display = 'none';
+        closeModal('overflowModal');
+        closeModal('instructionsModal');
+        switchToUpload();
+        
+        resultsCard.style.display = 'none';
+        preview.style.display = 'none';
+        currentFile = null;
+        analyzeBtn.disabled = true;
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+</script>
 </body>
 </html>
