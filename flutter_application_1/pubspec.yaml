@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/models/labels.txt
     - assets/models/best_mlpackage.zip
+    - assets/models/my-first-project.tflite
     - assets/assets/App_example_image.png
     - assets/assets/step_5.jpg
    

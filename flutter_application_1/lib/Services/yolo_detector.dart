@@ -18,13 +18,16 @@ class YoloDetector {
  Future<void> init() async {
    if (_isLoaded) return;
    try {
+     final String modelPath = Platform.isAndroid
+         ? 'assets/models/my-first-project.tflite'
+         : 'best';
      _yolo = YOLO(
-       modelPath: 'best', // Loads best.mlpackage inside Xcode bundle
+       modelPath: modelPath,
        task: YOLOTask.detect,
      );
      await _yolo!.loadModel();
      _isLoaded = true;
-     print("DEBUG YOLO: Successfully loaded CoreML model!");
+     print("DEBUG YOLO: Successfully loaded model: $modelPath");
    } catch (e) {
      print("Error loading YOLO model: $e");
    }
