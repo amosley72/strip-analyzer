@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Strip Dip Animation</title>
+<style>
+/* Local copies of the Tailwind utilities this page uses, so it works offline. */
+*,*::before,*::after{box-sizing:border-box;border:0 solid #e5e7eb}
+body{margin:0}
+.flex{display:flex}.inline-flex{display:inline-flex}.flex-col{flex-direction:column}
+.items-center{align-items:center}.items-stretch{align-items:stretch}.justify-center{justify-content:center}
+.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-6{gap:1.5rem}
+.w-full{width:100%}.h-full{height:100%}.w-12{width:3rem}.h-12{height:3rem}.min-h-screen{min-height:100vh}
+.max-w-4xl{max-width:56rem}.max-w-2xl{max-width:42rem}.mx-auto{margin-left:auto;margin-right:auto}.mt-6{margin-top:1.5rem}
+.p-2{padding:.5rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-4{padding-left:1rem;padding-right:1rem}
+.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}
+.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-8{padding-top:2rem;padding-bottom:2rem}.py-12{padding-top:3rem;padding-bottom:3rem}
+@media (min-width:640px){.sm\:p-10{padding:2.5rem}}
+.relative{position:relative}.absolute{position:absolute}.inset-0{inset:0}.top-4{top:1rem}.left-4{left:1rem}.z-20{z-index:20}
+.rounded-xl{border-radius:.75rem}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}
+.border{border-width:1px}.border-slate-100{border-color:#f1f5f9}.bg-white\/80{background-color:rgba(255,255,255,.8)}
+.backdrop-blur-sm{backdrop-filter:blur(4px)}
+.shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.05)}.shadow-xl{box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1)}
+.text-center{text-align:center}.text-sm{font-size:.875rem;line-height:1.25rem}.font-bold{font-weight:700}.font-semibold{font-weight:600}
+.transition{transition:all .15s}.hover\:opacity-90:hover{opacity:.9}
+button{cursor:pointer;font:inherit}
+:root{ --strip-w: 42px; --stage-h: 480px; }
+body { font-family: -apple-system, 'Roboto', 'Helvetica Neue', sans-serif; }
+.stage { position: relative; width: 100%; height: var(--stage-h); overflow: hidden; }
+.strip-wrap { position:absolute; left:50%; top:8px; transform: translateX(-50%); width: var(--strip-w); height: 300px; z-index: 5; will-change: transform; }
+.strip-wrap.play { animation: dipCycle 26s ease-in-out forwards; }
+@keyframes dipCycle { 0% { transform: translateX(-50%) translateY(-75px); } 12% { transform: translateX(-50%) translateY(-2px); } 18% { transform: translateX(-50%) translateY(-2px); } 88% { transform: translateX(-50%) translateY(-2px); } 100% { transform: translateX(-50%) translateY(-75px); } }
+.strip { position: relative; width: 100%; height: 100%; border-radius: 6px 6px 4px 4px; background: linear-gradient(180deg, #ffffff 0%, #ffffff 55%, #f4f4f4 55%, #f4f4f4 100%); box-shadow: 0 6px 14px rgba(0,0,0,.18); border:1px solid #e2e2e2; overflow:hidden; }
+.strip::before { content:""; position:absolute; top:14px;left:0;right:0;height:26px; background: linear-gradient(180deg, #e11d2a,#b5121e); }
+.strip .tip { position:absolute; bottom:0;left:0;right:0;height:70px; background: linear-gradient(180deg,#f5f5f5,#e8e8e8); }
+.max-line-strip { position: absolute; bottom: 70px; left: 0; right: 0; height: 2px; background-color: #011222; display: flex; justify-content: center; align-items: center; z-index: 10; }
+.max-line-strip span { font-family: ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 700; color: #ffffff; background-color: #011222; padding: 0px 3px; border-radius: 2px; transform: translateY(-1px); letter-spacing: 0.5px; }
+.result-window { position:absolute; top:70px;left:8px;right:8px;height:56px; background:#fbfbf6; border:1px solid #dcdcd2; border-radius:3px; display: flex; flex-direction:column; justify-content:center; gap:7px; padding:0 6px; }
+.band { height:5px;border-radius:2px;background:#d13a4a;opacity:0;transition:opacity 8s ease; }
+.strip-wrap.developed .band.c{ opacity:.95; }
+.strip-wrap.developed .band.t{ opacity:.65; }
+.cup-area { position:absolute; left:50%; bottom:95px; transform:translateX(-50%); width:150px; height:150px; z-index:4; }
+.cup { position:absolute; inset:0; border:3px solid #cfd8dc; border-top:none; border-radius:6px 6px 16px 16px; background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(236,244,246,.55)); box-shadow: inset 0 -8px 16px rgba(0,0,0,.05), 0 8px 20px rgba(0,0,0,.12); overflow:hidden; }
+.cup-rim{ position:absolute; top:-6px; left:-6px; right:-6px; height:12px; border-radius:50%; border:3px solid #cfd8dc; background: rgba(255,255,255,.5); z-index:6; }
+.liquid { position:absolute; left:0; right:0; bottom:0; height:34%; background: linear-gradient(180deg, rgba(120,200,225,.55), rgba(70,160,200,.75)); }
+.liquid .surface { position:absolute; top:0; left:0; right:0; height:6px; background: rgba(255,255,255,.45); animation: ripple 3.5s ease-in-out infinite; }
+@keyframes ripple { 0%,100% { transform: scaleY(1); opacity:.5; } 50% { transform: scaleY(1.6); opacity:.85; } }
+.cup-area.splash .liquid .surface { animation: rippleFast 1s ease-out 2; }
+@keyframes rippleFast { 0% { transform: scaleY(2.4); opacity:1; } 100% { transform: scaleY(1); opacity:.5; } }
+.ring { transform: rotate(-90deg); }
+.ring circle { fill:none; stroke-width:6; }
+.ring .track { stroke:#e2e8f0; }
+.ring .fill { stroke:#0f766e; stroke-linecap:round; transition: stroke-dashoffset 2s linear; }
+@media (max-width: 640px) { :root{ --stage-h: 400px; } }
+</style>
+</head>
+<body class="min-h-screen w-full flex items-center justify-center" style="background: linear-gradient(160deg, rgb(240, 247, 246), rgb(230, 239, 242), rgb(219, 233, 238));">
+<div class="w-full max-w-2xl mx-auto px-5 py-8">
+<main class="flex flex-col gap-6 items-stretch">
+<section class="canva-panel rounded-2xl p-4 shadow-sm relative" style="background: rgb(255, 255, 255);">
+<div class="absolute top-4 left-4 z-20 flex items-center gap-3 bg-white/80 backdrop-blur-sm p-2 rounded-xl border border-slate-100 shadow-sm">
+<div class="relative w-12 h-12">
+<svg class="ring w-12 h-12" viewBox="0 0 150 150" aria-hidden="true">
+<circle class="track" cx="75" cy="75" r="66"></circle>
+<circle id="ring-fill" class="fill" cx="75" cy="75" r="66"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span id="count" class="font-bold text-sm" style="font-family: ui-monospace, Menlo, monospace; color:#0f766e">0s</span>
+</div>
+</div>
+</div>
+<div class="stage">
+<div id="strip" class="strip-wrap">
+<div class="strip">
+<div class="result-window">
+<span class="band c"></span> <span class="band t"></span>
+</div>
+<div class="max-line-strip"><span>MAX</span></div>
+<div class="tip"></div>
+</div>
+</div>
+<div id="cup" class="cup-area">
+<div class="cup-rim"></div>
+<div class="cup">
+<div class="liquid">
+<div class="surface"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="flex justify-center">
+<button id="replay" type="button" class="canva-button inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold shadow-sm hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500" style="background: rgb(15, 118, 110); color: rgb(255, 255, 255);">
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+<span style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 16px;">Replay Animation</span>
+</button>
+</div>
+</main>
+</div>
+<script>
+const strip = document.getElementById('strip');
+const cup = document.getElementById('cup');
+const countEl = document.getElementById('count');
+const ringFill = document.getElementById('ring-fill');
+const R = 66;
+const CIRC = 2 * Math.PI * R;
+ringFill.style.strokeDasharray = CIRC;
+ringFill.style.strokeDashoffset = CIRC;
+const T = { lowerEnd: 3120, soakStart: 4680, soakEnd: 22880, total: 26000 };
+const SOAK_TARGET = 22;
+let raf = null;
+let startTs = null;
+function reset() {
+  if (raf) cancelAnimationFrame(raf);
+  strip.classList.remove('play', 'developed');
+  cup.classList.remove('splash');
+  void strip.offsetWidth;
+  countEl.textContent = '0s';
+  ringFill.style.strokeDashoffset = CIRC;
+}
+function play() {
+  reset();
+  strip.classList.add('play');
+  startTs = performance.now();
+  let splashed = false, developed = false;
+  function frame(now) {
+    const el = now - startTs;
+    if (!splashed && el >= T.lowerEnd) { splashed = true; cup.classList.add('splash'); }
+    if (el < T.soakStart) {
+      countEl.textContent = '0s';
+    } else if (el <= T.soakEnd) {
+      if (!developed && el >= T.soakStart + 2500){ developed = true; strip.classList.add('developed'); }
+      const p = (el - T.soakStart) / (T.soakEnd - T.soakStart);
+      const secs = Math.min(SOAK_TARGET, Math.round(p * SOAK_TARGET));
+      countEl.textContent = secs + 's';
+      ringFill.style.strokeDashoffset = CIRC * (1 - Math.min(1, p));
+    } else {
+      countEl.textContent = SOAK_TARGET + 's';
+      ringFill.style.strokeDashoffset = 0;
+    }
+    if (el < T.total) { raf = requestAnimationFrame(frame); }
+  }
+  raf = requestAnimationFrame(frame);
+}
+document.getElementById('replay').addEventListener('click', () => { play(); });
+play();
+</script>
+</body>
+</html>

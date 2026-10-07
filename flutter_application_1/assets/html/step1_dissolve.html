@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Powder Dissolving Animation</title>
+<style>
+/* Local copies of the Tailwind utilities this page uses, so it works offline. */
+*,*::before,*::after{box-sizing:border-box;border:0 solid #e5e7eb}
+body{margin:0}
+.flex{display:flex}.inline-flex{display:inline-flex}.flex-col{flex-direction:column}
+.items-center{align-items:center}.items-stretch{align-items:stretch}.justify-center{justify-content:center}
+.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-6{gap:1.5rem}
+.w-full{width:100%}.h-full{height:100%}.w-12{width:3rem}.h-12{height:3rem}.min-h-screen{min-height:100vh}
+.max-w-4xl{max-width:56rem}.max-w-2xl{max-width:42rem}.mx-auto{margin-left:auto;margin-right:auto}.mt-6{margin-top:1.5rem}
+.p-2{padding:.5rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-4{padding-left:1rem;padding-right:1rem}
+.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}
+.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-8{padding-top:2rem;padding-bottom:2rem}.py-12{padding-top:3rem;padding-bottom:3rem}
+@media (min-width:640px){.sm\:p-10{padding:2.5rem}}
+.relative{position:relative}.absolute{position:absolute}.inset-0{inset:0}.top-4{top:1rem}.left-4{left:1rem}.z-20{z-index:20}
+.rounded-xl{border-radius:.75rem}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}
+.border{border-width:1px}.border-slate-100{border-color:#f1f5f9}.bg-white\/80{background-color:rgba(255,255,255,.8)}
+.backdrop-blur-sm{backdrop-filter:blur(4px)}
+.shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.05)}.shadow-xl{box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1)}
+.text-center{text-align:center}.text-sm{font-size:.875rem;line-height:1.25rem}.font-bold{font-weight:700}.font-semibold{font-weight:600}
+.transition{transition:all .15s}.hover\:opacity-90:hover{opacity:.9}
+button{cursor:pointer;font:inherit}
+body { font-family: -apple-system, 'Roboto', 'Helvetica Neue', sans-serif; }
+.scene-wrap { width: 100%; max-width: 420px; margin: 0 auto; }
+.scene { position: relative; width: 100%; aspect-ratio: 1/1; }
+.cup-body { fill: rgba(255,255,255,0.28); stroke: rgba(255,255,255,0.85); stroke-width: 4; }
+.cup-glass-hi { fill: rgba(255,255,255,0.35); }
+.liquid { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0); animation: liquidRise 12s linear infinite; }
+@keyframes liquidRise { 0%, 18% { transform: scaleY(0); } 38% { transform: scaleY(0.25); } 100% { transform: scaleY(0.25); } }
+.water-stream { opacity: 0; transform-box: fill-box; transform-origin: top; animation: streamFlow 12s linear infinite; }
+@keyframes streamFlow { 0%, 18% { opacity: 0; transform: scaleY(0); } 20% { opacity: 0.9; transform: scaleY(1); } 36% { opacity: 0.9; transform: scaleY(1); } 40%,100% { opacity: 0; transform: scaleY(0); } }
+.liquid-cloud { animation: cloudClear 12s linear infinite; }
+@keyframes cloudClear { 0%, 38% { opacity: 0; } 45% { opacity: 0.55; } 78% { opacity: 0.55; } 92%,100% { opacity: 0; } }
+.scoop { transform-box: view-box; transform-origin: center; animation: scoopMove 12s ease-in-out infinite; }
+@keyframes scoopMove { 0% { transform: translate(-140px,-60px) rotate(-10deg); opacity: 0; } 3% { transform: translate(0px,-30px) rotate(-10deg); opacity: 1; } 9% { transform: translate(0px,-10px) rotate(-10deg); opacity: 1; } 13% { transform: translate(0px,-10px) rotate(28deg); opacity: 1; } 17% { transform: translate(0px,-30px) rotate(-10deg); opacity: 1; } 20% { transform: translate(-140px,-60px) rotate(-10deg); opacity: 0; } 100% { transform: translate(-140px,-60px) rotate(-10deg); opacity: 0; } }
+.powder-fall { opacity: 0; transform-box: fill-box; animation: powderFall 12s linear infinite; }
+@keyframes powderFall { 0%, 13% { opacity: 0; transform: translateY(-40px); } 14% { opacity: 1; transform: translateY(-30px); } 17% { opacity: 1; transform: translateY(60px); } 18%,100% { opacity: 0; transform: translateY(60px); } }
+.powder-mound { animation: moundLife 12s linear infinite; }
+@keyframes moundLife { 0%,14% { opacity: 0; } 17% { opacity: 1; } 40% { opacity: 1; } 55% { opacity: 0.35; } 100% { opacity: 0; } }
+.particle { transform-box: fill-box; transform-origin: center; animation: particleLife 12s ease-in-out infinite; }
+@keyframes particleLife { 0%,40% { opacity: 0; } 45% { opacity: 0.9; } 78% { opacity: 0.4; } 90%,100% { opacity: 0; } }
+.swirl-group { transform-box: view-box; transform-origin: 210px 300px; animation: swirl 12s linear infinite; }
+@keyframes swirl { 0%,55% { transform: rotate(0deg); } 58% { transform: rotate(90deg); } 66% { transform: rotate(360deg); } 74% { transform: rotate(630deg); } 82%,100% { transform: rotate(720deg); } }
+.spoon { transform-box: view-box; transform-origin: 210px 120px; animation: spoonStir 12s ease-in-out infinite; opacity: 0; }
+@keyframes spoonStir { 0%,54% { opacity: 0; transform: translateY(-40px) rotate(0deg); } 56% { opacity: 1; transform: translateY(0px) rotate(0deg); } 60% { opacity: 1; transform: translateY(0px) rotate(-14deg); } 68% { opacity: 1; transform: translateY(0px) rotate(14deg); } 76% { opacity: 1; transform: translateY(0px) rotate(-14deg); } 82% { opacity: 1; transform: translateY(0px) rotate(0deg); } 85% { opacity: 0; transform: translateY(-40px) rotate(0deg); } 100% { opacity: 0; transform: translateY(-40px) rotate(0deg); } }
+.done-badge { transform-box: fill-box; transform-origin: center; opacity: 0; animation: donePop 12s ease-out infinite; }
+@keyframes donePop { 0%,86% { opacity: 0; transform: scale(0.4); } 90% { opacity: 1; transform: scale(1.1); } 94% { opacity: 1; transform: scale(1); } 99% { opacity: 0.9; transform: scale(1); } 100% { opacity: 0; transform: scale(0.4); } }
+</style>
+</head>
+<body class="min-h-screen w-full flex flex-col justify-center items-center" style="background: linear-gradient(160deg, rgb(234, 244, 249), rgb(214, 233, 242), rgb(195, 223, 236));">
+<main class="w-full px-4 py-12">
+<div class="max-w-4xl mx-auto">
+<section class="canva-card rounded-3xl p-6 sm:p-10 shadow-xl" style="background: linear-gradient(rgb(255, 255, 255), rgb(242, 249, 252));">
+<div class="scene-wrap">
+<div id="stage" class="stage scene">
+<svg viewBox="0 0 420 420" class="w-full h-full" aria-hidden="true">
+<defs>
+<clipPath id="cupClip">
+<path d="M120 150 L300 150 L280 360 Q210 380 140 360 Z"></path>
+</clipPath>
+<linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#7fd4e8"></stop>
+<stop offset="100%" stop-color="#3aa7c9"></stop>
+</linearGradient>
+<linearGradient id="scoopGrad" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#e9edf2"></stop>
+<stop offset="100%" stop-color="#c3ccd6"></stop>
+</linearGradient>
+</defs>
+<ellipse cx="210" cy="378" rx="120" ry="16" fill="rgba(0,0,0,0.12)"></ellipse>
+<g clip-path="url(#cupClip)">
+<rect class="liquid" x="120" y="200" width="180" height="180" fill="url(#waterGrad)"></rect>
+<rect class="liquid-cloud" x="120" y="200" width="180" height="180" fill="#ffffff"></rect>
+<g class="powder-mound">
+<ellipse cx="200" cy="352" rx="42" ry="12" fill="#f4d58d"></ellipse>
+<ellipse cx="200" cy="346" rx="30" ry="10" fill="#f0c766"></ellipse>
+<ellipse cx="210" cy="356" rx="26" ry="8" fill="#f4d58d"></ellipse>
+</g>
+<g class="swirl-group">
+<circle class="particle" cx="180" cy="290" r="4" fill="#f0c766" style="animation-delay:0s"></circle>
+<circle class="particle" cx="240" cy="270" r="3" fill="#f4d58d" style="animation-delay:.2s"></circle>
+<circle class="particle" cx="200" cy="320" r="3.5" fill="#f0c766" style="animation-delay:.1s"></circle>
+<circle class="particle" cx="230" cy="330" r="3" fill="#f4d58d" style="animation-delay:.3s"></circle>
+<circle class="particle" cx="170" cy="330" r="2.5" fill="#f0c766" style="animation-delay:.15s"></circle>
+<circle class="particle" cx="255" cy="300" r="2.5" fill="#f4d58d" style="animation-delay:.25s"></circle>
+</g>
+<rect class="water-stream" x="200" y="150" width="12" height="130" rx="6" fill="url(#waterGrad)"></rect>
+<g>
+<circle class="powder-fall" cx="196" cy="200" r="4" fill="#f0c766" style="animation-delay:0s"></circle>
+<circle class="powder-fall" cx="206" cy="200" r="3" fill="#f4d58d" style="animation-delay:.15s"></circle>
+<circle class="powder-fall" cx="216" cy="200" r="3.5" fill="#f0c766" style="animation-delay:.3s"></circle>
+<circle class="powder-fall" cx="200" cy="200" r="2.5" fill="#f4d58d" style="animation-delay:.45s"></circle>
+<circle class="powder-fall" cx="212" cy="200" r="3" fill="#f0c766" style="animation-delay:.55s"></circle>
+</g>
+</g>
+<path class="cup-body" d="M120 150 L300 150 L280 360 Q210 380 140 360 Z"></path>
+<path class="cup-glass-hi" d="M140 160 L152 160 L142 350 Q136 350 132 348 Z"></path>
+<g class="scoop">
+<rect x="192" y="60" width="8" height="70" rx="4" fill="url(#scoopGrad)"></rect>
+<path d="M170 130 Q196 172 222 130 Z" fill="url(#scoopGrad)" stroke="#aeb8c4" stroke-width="2"></path>
+<ellipse cx="196" cy="132" rx="26" ry="8" fill="#f0c766"></ellipse>
+</g>
+<g class="spoon">
+<rect x="206" y="70" width="8" height="180" rx="4" fill="url(#scoopGrad)"></rect>
+<ellipse cx="210" cy="252" rx="18" ry="24" fill="url(#scoopGrad)" stroke="#aeb8c4" stroke-width="2"></ellipse>
+</g>
+<g class="done-badge">
+<circle cx="330" cy="120" r="26" fill="#22c55e"></circle>
+<path d="M318 120 l8 9 L342 110" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+</g>
+</svg>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body>
+</html>

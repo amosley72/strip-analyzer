@@ -31,10 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   camera: ^0.12.0+1
-  http: ^1.2.0
-  tflite_flutter: ^0.12.1
   # The following adds the webview_flutter dependency for HTML animations.
-  webview_flutter: any
+  webview_flutter: ^4.14.0
   
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -72,12 +70,12 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/models/labels.txt
-    - assets/models/best_mlpackage.zip
-    - assets/models/my-first-project.tflite
-    - assets/assets/App_example_image.png
-    - assets/assets/step_5.jpg
-   
+    # Android model; iOS uses ios/Runner/best.mlpackage. Both exported from
+    # the same best.pt (Roboflow dataset, Jul 22 2026).
+    - assets/models/best_int8.tflite
+    - assets/html/
+    - assets/images/App_example_image.png
+    - assets/images/step_5.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
