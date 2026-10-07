@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Camera only: audio is disabled and photos stay in app temp storage. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <application
         android:label="flutter_application_1"
         android:name="${applicationName}"
