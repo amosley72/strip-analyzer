@@ -1,13 +1,23 @@
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'strip_analyzer.dart';
 
-/// Size of the on-screen green guide box, as a fraction of the photo.
+/// Width of the region analyzed, as a fraction of the photo (matches the
+/// on-screen green guide box).
 const double guideWidthFraction = 0.95;
-const double guideHeightFraction = 0.12;
+
+/// Width:height of the region analyzed, centered on the guide box.
+///
+/// Deliberately taller than the green box. The model was trained on ordinary
+/// phone photos and loses confidence on thin slivers: on a strip with a faint
+/// test line, its confidence in that line was 0.16 with the old 6:1 crop
+/// (just above the 0.15 cutoff, and missed on a phone) versus 0.35-0.57 for
+/// crops between 5:1 and 2.5:1, and 0.57 at 3:1.
+const double cropAspectRatio = 3.0;
 
 /// Turns a raw camera JPEG into the image that is analyzed: rotated upright,
-/// cropped to the guide box, and re-encoded without an orientation tag.
+/// cropped around the guide box, and re-encoded without an orientation tag.
 ///
 /// Baking the rotation into the pixels matters because the readers disagree
 /// on EXIF orientation: iOS's UIImage applies it, Android's BitmapFactory and
@@ -23,7 +33,10 @@ Uint8List prepareCapture(Uint8List jpegBytes) {
   final upright = img.bakeOrientation(decoded);
 
   final cropWidth = (upright.width * guideWidthFraction).round();
-  final cropHeight = (upright.height * guideHeightFraction).round();
+  final cropHeight = math.min(
+    upright.height,
+    (cropWidth / cropAspectRatio).round(),
+  );
   final cropped = img.copyCrop(
     upright,
     x: (upright.width - cropWidth) ~/ 2,

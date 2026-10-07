@@ -185,7 +185,10 @@ void main() {
     landscape.exif.imageIfd.orientation = 6; // stored rotated 90°
     final prepared = img.decodeJpg(prepareCapture(img.encodeJpg(landscape)))!;
     expect(prepared.width, (300 * guideWidthFraction).round());
-    expect(prepared.height, (400 * guideHeightFraction).round());
+    expect(
+      prepared.height,
+      ((300 * guideWidthFraction).round() / cropAspectRatio).round(),
+    );
     expect(prepared.exif.imageIfd.orientation ?? 1, 1);
   });
 
