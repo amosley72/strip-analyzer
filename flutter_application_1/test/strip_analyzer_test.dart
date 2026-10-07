@@ -188,4 +188,28 @@ void main() {
     expect(prepared.height, (400 * guideHeightFraction).round());
     expect(prepared.exif.imageIfd.orientation ?? 1, 1);
   });
+
+  group('background isolates (the capture path on a phone)', () {
+    test('prepareCaptureInBackground returns a cropped JPEG', () async {
+      final photo = img.encodeJpg(img.Image(width: 400, height: 300));
+      final prepared = img.decodeJpg(await prepareCaptureInBackground(photo))!;
+      expect(prepared.width, (400 * guideWidthFraction).round());
+    });
+
+    test(
+      'analyzeStripJpegInBackground analyzes YOLO boxes on the JPEG',
+      () async {
+        final jpeg = img.encodeJpg(
+          stripImage({200: 0.3, 400: 0.4}),
+          quality: 97,
+        );
+        final result = await analyzeStripJpegInBackground(jpeg, [
+          box(200),
+          box(400),
+        ]);
+        expect(result.outcome, TestOutcome.negative);
+        expect(result.tcRatio, closeTo(0.75, 0.12));
+      },
+    );
+  });
 }

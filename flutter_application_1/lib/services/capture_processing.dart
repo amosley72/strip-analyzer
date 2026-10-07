@@ -1,5 +1,6 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
+import 'strip_analyzer.dart';
 
 /// Size of the on-screen green guide box, as a fraction of the photo.
 const double guideWidthFraction = 0.95;
@@ -33,3 +34,26 @@ Uint8List prepareCapture(Uint8List jpegBytes) {
   // High quality: JPEG artifacts at lower settings blur faint lines.
   return img.encodeJpg(cropped, quality: 97);
 }
+
+/// Decodes a prepared strip JPEG and analyzes it with YOLO's [predictions].
+AnalysisResult analyzeStripJpeg((Uint8List, List<YoloPrediction>) job) {
+  final (stripJpeg, predictions) = job;
+  final image = img.decodeJpg(stripJpeg);
+  if (image == null) {
+    throw const FormatException('Could not decode the strip image.');
+  }
+  return StripAnalyzer.analyzeStrip(predictions: predictions, image: image);
+}
+
+// Background versions. These pass a top-level function plus its data to
+// `compute`, so only that data is copied to the worker isolate. (A closure
+// written inside a widget method would carry the method's whole context,
+// including unsendable objects like the CameraController.)
+
+Future<Uint8List> prepareCaptureInBackground(Uint8List jpegBytes) =>
+    compute(prepareCapture, jpegBytes);
+
+Future<AnalysisResult> analyzeStripJpegInBackground(
+  Uint8List stripJpeg,
+  List<YoloPrediction> predictions,
+) => compute(analyzeStripJpeg, (stripJpeg, predictions));

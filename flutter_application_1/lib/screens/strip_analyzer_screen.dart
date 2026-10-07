@@ -1,27 +1,12 @@
 import 'dart:async';
-import 'dart:isolate';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
 import '../services/capture_processing.dart';
 import '../services/strip_analyzer.dart';
 import '../services/yolo_detector.dart';
 import '../widgets/html_animation.dart';
 import '../widgets/profile_graph.dart';
-
-/// Decodes the prepared strip image and runs the analysis. Top-level so it
-/// can run in a background isolate without capturing widget state.
-AnalysisResult _analyzeInBackground(
-  Uint8List stripJpeg,
-  List<YoloPrediction> predictions,
-) {
-  final image = img.decodeJpg(stripJpeg);
-  if (image == null) {
-    throw const FormatException('Could not decode the strip image.');
-  }
-  return StripAnalyzer.analyzeStrip(predictions: predictions, image: image);
-}
 
 class StripAnalyzerScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -128,12 +113,10 @@ class StripAnalyzerScreenState extends State<StripAnalyzerScreen> {
       _stopCamera(returnToStep: false);
 
       // Heavy image work runs off the UI thread.
-      final stripJpeg = await Isolate.run(() => prepareCapture(rawBytes));
+      final stripJpeg = await prepareCaptureInBackground(rawBytes);
       final detections = await _detector.detect(stripJpeg);
       final predictions = detections.predictions;
-      final result = await Isolate.run(
-        () => _analyzeInBackground(stripJpeg, predictions),
-      );
+      final result = await analyzeStripJpegInBackground(stripJpeg, predictions);
 
       if (!mounted) return;
       setState(() => _result = result);
